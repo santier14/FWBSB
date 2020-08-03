@@ -1,4 +1,4 @@
-import numpy as np
+import numpy
 from matplotlib import pyplot as plt
 
 def read_results(data):
@@ -14,10 +14,8 @@ def read_detections(date):
     return fr
 
 def read_numpy(date, name):
-    file_name ="./"+date+"/ACS/75_2000/"+name+".npy"
-    #file_name="180101_ACS-1.0.npy"
-    #print(file_name)
-    data = np.load(file_name,allow_pickle=True,encoding='latin1')
+    filename ="./"+date+"/ACS/75_2000/"+name+".npy"
+    data = numpy.load(filename, allow_pickle=True, encoding='latin1')
     return data
 
 def trans_date(date):
@@ -25,6 +23,18 @@ def trans_date(date):
     date = date.replace('-','')
     date = date.replace(' ','')
     return str(date)
+
+def trans_name(name):
+    name = name.replace(' ','')
+    return str(name)
+
+def trans_time(time):
+    time = time.replace(' ','')
+    hours = time[:2]
+    minutes = time[3:5]
+    seconds = time[6:]
+    time = (int(hours)*60+int(minutes))*60+float(seconds)
+    return float(time)
 
 def correspond(Param):
     header=["trigger","date","time","GRB_type","snr","peakflux","errpeakflux","fluence","errfluence","T90","errT90","multdur","var","errvar","T0"]
@@ -45,36 +55,20 @@ def Extract_WBSoneparam(Param, data):
         par = np.char.strip(par)
     return par
 
-def Extract_alertname(date):
-    fr=read_detections(date)
-    par=[]
-    idi=0
-    for line in fr:
-        par.append(line.split(" \t")[idi])
-    par=np.array(par)
-    return par
-
 
 data = "AllFWBSdetection_2018"
-param = "date"  
-date = Extract_WBSoneparam(param, data)
-name = Extract_alertname(trans_date(date[0]))
+date = Extract_WBSoneparam("date", data)
+name = Extract_WBSoneparam("trigger", data)
+start = Extract_WBSoneparam("time", data)
+T90 = Extract_WBSoneparam("T90", data)
+err_T90 = Extract_WBSoneparam("errT90", data)
+plot_data = read_numpy(trans_date(date[0]), trans_name(name[0]))
 
-print(trans_date(date[0]))
-print(name[0])
+plt.vlines(0,min(plot_data[0,1])-1000,max(plot_data[0,1])+1000, color='green')
+plt.vlines(T90[0]+err_T90[0],min(plot_data[0,1])-1000,max(plot_data[0,1])+1000, color='pink')
+plt.step(plot_data[0,0]-trans_time(start[0]), plot_data[0,1], color='grey')
+plt.step(plot_data[1,0]-trans_time(start[0]), plot_data[1,1], color='blue')
+plt.step(plot_data[2,0]-trans_time(start[0]), plot_data[2,1], linestyle='--', color='purple',)
+plt.ylim(min(plot_data[0,1])-500,max(plot_data[0,1])+500)
+plt.show
 
-test = read_numpy(trans_date(date[0]), name[0])
-print(test[1])
-
-#all_detection = open("./Catalogue/AllFWBSdetection_2018.txt", "r")
-#
-#line = all_detection.readline()
-#
-#while line:
-#    print(line)
-#    line = all_detection.readline()
-#
-#print(line)
-
-#all_detection.close()    
-#modiftest
