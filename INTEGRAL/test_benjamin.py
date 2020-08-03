@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 from matplotlib import pyplot as plt
 
 def read_results(data):
@@ -7,15 +7,15 @@ def read_results(data):
     fr=f.readlines()
     return fr
 
-def read_detections(date):
+def read_summary(date):
     path_store_result="./"
-    f=open(path_store_result+date+"/ACS/75_2000/"+date+"_ACS_emin75_emax2000_bin0.2-0.txt", "r")
+    f=open(path_store_result+date+"/ACS/75_2000/Summary"+date+"_ACS_emin75_emax2000_bin0.2-0.txt", "r")
     fr=f.readlines()
     return fr
 
 def read_numpy(date, name):
     filename ="./"+date+"/ACS/75_2000/"+name+".npy"
-    data = numpy.load(filename, allow_pickle=True, encoding='latin1')
+    data = np.load(filename, allow_pickle=True, encoding='latin1')
     return data
 
 def trans_date(date):
@@ -41,6 +41,11 @@ def correspond(Param):
     indice=header.index(Param)
     return indice
 
+def correspond2(Param):
+    header=["trigger","date","time","multdur","snr","GRB_type","peakflux","fluence","T90","Tstart","Tend"]
+    indice=header.index(Param)
+    return indice
+
 def Extract_WBSoneparam(Param, data):
     fr=read_results(data)
     par=[]
@@ -55,20 +60,37 @@ def Extract_WBSoneparam(Param, data):
         par = np.char.strip(par)
     return par
 
+def Extract_Summaryparam(Param, date):
+    fr=read_summary(date)
+    par=[]
+    idi=correspond2(Param)
+    for line in fr:
+        if Param in ["trigger","date","time","GRB_type"]:
+            par.append(line.split("\t")[idi])
+        else:
+            par.append(float(line.split("\t")[idi]))
+    par=np.array(par)
+    if Param=="GRB_type":
+        par = np.char.strip(par)
+    return par
 
 data = "AllFWBSdetection_2018"
+
 date = Extract_WBSoneparam("date", data)
 name = Extract_WBSoneparam("trigger", data)
 start = Extract_WBSoneparam("time", data)
 T90 = Extract_WBSoneparam("T90", data)
 err_T90 = Extract_WBSoneparam("errT90", data)
 plot_data = read_numpy(trans_date(date[0]), trans_name(name[0]))
+Tstart = Extract_Summaryparam("Tstart", trans_date(date[0]))
+Tend = Extract_Summaryparam("Tend", trans_date(date[0]))
 
 plt.vlines(0,min(plot_data[0,1])-1000,max(plot_data[0,1])+1000, color='green')
+plt.vlines(Tstart[0],min(plot_data[0,1])-1000,max(plot_data[0,1])+1000, linestyle='--', color='blue')
+plt.vlines(Tend[0],min(plot_data[0,1])-1000,max(plot_data[0,1])+1000, linestyle='--', color='blue')
 plt.vlines(T90[0]+err_T90[0],min(plot_data[0,1])-1000,max(plot_data[0,1])+1000, color='pink')
-plt.step(plot_data[0,0]-trans_time(start[0]), plot_data[0,1], color='grey')
-plt.step(plot_data[1,0]-trans_time(start[0]), plot_data[1,1], color='blue')
-plt.step(plot_data[2,0]-trans_time(start[0]), plot_data[2,1], linestyle='--', color='purple',)
+plt.step(plot_data[0,0]-trans_time(start[0]), plot_data[0,1], color='grey', where='post')
+plt.step(plot_data[1,0]-trans_time(start[0]), plot_data[1,1], color='blue', where='post')
+plt.step(plot_data[2,0]-trans_time(start[0]), plot_data[2,1], linestyle='--', color='purple', where='post')
 plt.ylim(min(plot_data[0,1])-500,max(plot_data[0,1])+500)
 plt.show
-
