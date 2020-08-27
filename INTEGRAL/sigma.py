@@ -105,6 +105,8 @@ def Save_Image(p,pic,grbtype,name,T0,T90,err_T90,plot_data,dst,sigma3,sigma5,sig
     ok = 'ok'
     return ok
 
+
+# Même programme que correlation jusqu'a la ligne 136 #
 data = "AllFWBSdetectionmodif_2018"
 
 date = Extract_WBSoneparam("date", data)
@@ -138,14 +140,17 @@ while i<len(date):
         burst = []
         time = []
         brut =[]
+        # On définit les limites à 3, 5 et 7 sigmas (qui seront afficher sur les graphes pour nous aider à chosir notre limite visuellement #
         s3 =[]
         s5 = []
         s7 = []
         while j<len(plot_data[0,1]):
+            # value = le sigma pour chaque point de notre courbe (200ms) #
             value = (plot_data[0,1][j]-plot_data[2,1][j])/sqrt(plot_data[2,1][j])
             s3.append((3*sqrt(plot_data[2,1][j])) + plot_data[2,1][j])
             s5.append((5*sqrt(plot_data[2,1][j])) + plot_data[2,1][j])
             s7.append((7*sqrt(plot_data[2,1][j])) + plot_data[2,1][j])
+            # On fait un test sur les valeurs précédants la valeur calculé pour savoir si c'est un pic ou juste la continuité d'un pic déja mesurée #
             if j<2:
                 valuem1=0
                 valuem2=0
@@ -165,6 +170,7 @@ while i<len(date):
         sigma3.append(s3)
         sigma5.append(s5)
         sigma7.append(s7)
+        # Ici on tri nos sursaut en fonction de leur nombre de pics (Si moins de 5 => courts sinon long) et ensuite on rassemble les sursauts avec le même nombre de pics #
         if pics[p-1]<5:
             if pics[p-1]==1:
                 dst="./Catalogue/CHABERT_short/1pic/"
@@ -177,6 +183,7 @@ while i<len(date):
                 dst="./Catalogue/CHABERT_long/nottoolong/"
             else:
                 dst="./Catalogue/CHABERT_long/verylong/"
+        # On enregistre le graphe dans le bon répertoire à l'aide du tri précédent #
         image = Save_Image(p,pics[i],grbtype[i],name[i],T0[i],T90[i],err_T90[i],plot_data,dst,sigma3[i],sigma5[i],sigma7[i])
         p=p+1
     i=i+1
