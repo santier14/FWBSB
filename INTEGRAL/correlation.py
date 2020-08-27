@@ -105,8 +105,10 @@ def Save_Image(p,pic,grbtype,name,T0,T90,err_T90,plot_data,dst,sigma3,sigma5,sig
     ok = 'ok'
     return ok
 
+# Choix du fichier dans lequel on veut analyser les sursauts #
 data = "AllFWBSdetectionmodif_2018"
 
+# Définition de quelques paramètres utiles (ce sont des listes) #
 date = Extract_WBSoneparam("date", data)
 name = Extract_WBSoneparam("trigger", data)
 T90 = Extract_WBSoneparam("T90", data)
@@ -116,12 +118,16 @@ T0 = Extract_WBSoneparam("T0", data)
 grbtype = Extract_WBSoneparam("GRB_type", data)
 
 i=0
+# Définiton des listes que l'on complète durant la boucle #
 pearson = []
 ptime = []
 namel = []
 grbtypel=[]
+# Choix de la longueur de la boucle (soit tout le document soit une partie) #
 while i<len(date):
 #while i<55:
+    # On fait un test pour savoir si il exise un fichier numpy correspondant au nom du sursaut (si c'est le cas on stocke les information dans "plot_data" sinon on passe au sursaut suivant) #
+    # plot_data [0,0] et [0,1] => temps (200ms) et data ;  plot_data [1,0] et [1,1] => temps (1s) et data ; plot_data[2,1] => snr #
     try:
         plot_data = read_numpy(trans_date(date[i]), trans_name(name[i]))
     except:
@@ -136,6 +142,7 @@ while i<len(date):
         burst=[]
         burst2=[]
         time=[]
+	# On définit les bornes d'action de notre programme x=début et y=fin #
         x = float(date2sec(trans_T0(T0[i])))-2
         if float(T90[i])<2.0:
             y = float(20*(T90[i]+err_T90[i])+date2sec(trans_T0(T0[i])))
@@ -145,16 +152,19 @@ while i<len(date):
             y = float(5*(T90[i]+err_T90[i])+date2sec(trans_T0(T0[i])))
         else:
             y = float(5*(T90[i]+err_T90[i])+date2sec(trans_T0(T0[i])))
+	# Si la dernière valeur est le maximum on ne prend pas en compte cette dernière #
         if plot_data[1,1][-1]==max(plot_data[1,1]):
             z=1
         else:
             z=0
+	# Boucle dans laquelle on ajoute les points que l'on veut analyser dans une liste #
         while j<len(plot_data[1,0])-z:
             if plot_data[1,0][j]>x and plot_data[1,0][j]<y:
                 burst.append(plot_data[1,1][j])
                 j=j+1
             else:
                 j=j+1
+	# Boucle dans laquelle on fait en sorte que le maximum soit le premier point #
         while k<len(burst):
             if burst[k]<max(burst) and l==0:
                 k=k+1
@@ -164,6 +174,7 @@ while i<len(date):
                 time.append(t)
                 k=k+1
                 t=t+1
+	# On ajoute ensuite notre liste correspondant à un sursaut dans notre liste générale pour l'analyse #
         if len(burst2)==len(time) and len(burst2)!=0:
             pearson.append(burst2)
             ptime.append(time)
@@ -174,6 +185,7 @@ while i<len(date):
 i=0
 k=0
 m=0
+# Définition des trois classes (short,long et autre) #
 short = []
 shorttime = []
 shortname = []
@@ -188,12 +200,14 @@ othername = []
 othertype = []
 pearson_save = pearson
 ptime_save = ptime
+# Choix de la longueur de la boucle (i=n familles ou on enlève les familles et on classe tous les sursauts avec leurs semblables) #
 #while len(pearson)>0:
 while i<2:
     j=0
     l=0
     while j<len(pearson):
         if i!=j:
+	    # On fait en sorte que les deux sursauts que l'on compare est le meme nombre de points en ajoutant un point à la liste la plus courte #
             pearson[i]=pearson_save[i]
             ptime[i]=ptime_save[i]
             pearson[j]=pearson_save[j]
@@ -218,7 +232,9 @@ while i<2:
 #                    del ptimei[-1]
 #                    ptime[i]=ptimei
             test = pearsonr(pearson[i],pearson[j])
+	    # On fixe la limite pour savoir si un sursaut A est corrélé avec un sursaut B (si le critère est rempli on l'ajoute à sa famille correspondante)
             if test[0]>0.7:
+		# On ajoute d'abord le sursaut A si ce n'est pas déjà fait
                 if l==0:
                     pearson[i]=pearson_save[i]
                     ptime[i]=ptime_save[i]
@@ -239,13 +255,14 @@ while i<2:
                         longtime.append(ptime[i])
                         longname.append(namel[i])
                         longtype.append(grbtypel[i])
-                    #plt.figure(k+1)
-                    #plt.step(ptime[i], pearson[i], color='blue', where='post',label=namel[i])
+                    plt.figure(k+1)
+                    plt.step(ptime[i], pearson[i], color='blue', where='post',label=namel[i])
                     l=1
                 pearson[i]=pearson_save[i]
                 ptime[i]=ptime_save[i]
                 pearson[j]=pearson_save[j]
                 ptime[j]=ptime_save[j]
+		# Puis on ajoute et supprime le sursaut B #
                 while len(ptime[i])!=len(pearson[j]):
                     if len(ptime[i])<len(pearson[j]):
                         pearsonj=pearson[j]
@@ -263,7 +280,7 @@ while i<2:
                     longtime.append(ptime[j])
                     longname.append(namel[j])
                     longtype.append(grbtypel[j])
-                #plt.step(ptime[i], pearson[j], color='grey', where='post', label=namel[j])
+                plt.step(ptime[i], pearson[j], color='grey', where='post', label=namel[j])
                 del pearson[j]
                 del ptime[j]
                 del namel[j]
@@ -276,7 +293,8 @@ while i<2:
                 j = j+1
         else:
             j=j+1
-    if l==1:
+# On supprime le sursaut A un fois comparé avec tous les autres sursauts uniquement si il appartient à une famille sinon on le garde dans notre première liste et on passe au sursaut suivant #   
+if l==1:
         del pearson[i]
         del ptime[i]
         del namel[i]
