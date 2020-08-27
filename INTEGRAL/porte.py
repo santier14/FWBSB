@@ -13,8 +13,6 @@ def porte(hauteur,largeur,centre,X):
             porte.append(y)
     return porte
 
-
-
 def dbporte(hauteur,largeur,centre,hauteur2,largeur2,centre2,X):
     porte = []
     for x in X:
@@ -55,11 +53,13 @@ x = np.linspace(-5, 5, num=100)
 Y = np.linspace(-5, 5, num=11)
 Z = np.linspace(-5, 5, num=11)
 
+
+# Compare une porte triple fixe avec une autre dont deux pics varient #
 portes=tpporte(2,1,0,2,1,2,2,1,4,x)
 k=1
 for z in Z:
     for y in Y:
-        portes2=tpporte(4,1,0,2,1,y,2,1,z,x)
+        portes2=tpporte(2,1,0,2,1,y,2,1,z,x)
         test=pearsonr(portes,portes2)[0]
         plt.figure(k)
         plt.step(x,portes,x,portes2)
@@ -67,7 +67,7 @@ for z in Z:
         k=k+1
 
 
-# ############ Shift ############
+# ############ Décalage avec des portes simples ############
 
 # Y = np.linspace(1, 4, num=4)
 # portes=porte(2,2,0,x)
